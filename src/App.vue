@@ -7,6 +7,11 @@
     <li v-for="number in numbers" :key="number">{{ number }}</li>
   </ul>
   <h1>{{ person.name }}</h1>
+  <h1>x:{{ x }},y:{{ y }}</h1>
+  <h1 v-if="loading">Loading....</h1>
+  <h1>
+    <img v-if="loaded" :src="result[0].url" width="100" height="100" />
+  </h1>
   <button @click="increase">👍🏻+1</button>
   <button @click="updateGreeting">同步更新title</button>
 </template>
@@ -22,6 +27,8 @@ import {
   onRenderTriggered,
   watch,
 } from "vue";
+import useMousePosition from "./hooks/useMousePosition";
+import useURLLoader from "./hooks/useURLLoader";
 interface DataProps {
   count: number;
   double: number;
@@ -29,6 +36,19 @@ interface DataProps {
   numbers: number[];
   person: { name?: string };
 }
+
+interface DogResult {
+  message: string;
+  status: string;
+}
+
+interface CatResult {
+  id: string;
+  url: string;
+  width: number;
+  height: number;
+}
+
 export default {
   name: "App",
   setup() {
@@ -57,6 +77,17 @@ export default {
       numbers: [1, 2, 3],
       person: {},
     });
+
+    const { x, y } = useMousePosition();
+    const { result, loading, loaded } = useURLLoader<DogResult[]>(
+      "https://api.thecatapi.com/v1/images/search?limit=1"
+    );
+    watch(result, () => {
+      if (result.value) {
+        console.log("value", result.value[0]);
+      }
+    });
+
     const greetings = ref("");
     const updateGreeting = () => {
       greetings.value += "Hello! ";
@@ -70,6 +101,11 @@ export default {
     return {
       ...refData,
       updateGreeting,
+      x,
+      y,
+      result,
+      loading,
+      loaded,
     };
   },
 };
